@@ -1,0 +1,80 @@
+- name: Install dependencies
+  yum: name={{ item }} state=present
+  with_items:
+    - git
+    - curl
+    - curl-devel
+    - "@Desktop"
+    - tigervnc-server
+    - xorg-x11-fonts-Type1
+    - firefox
+
+- name: Create user
+  user: name={{user.name}} password={{ user.password |password_hash('sha512') }} state=present
+
+- name: Add user to sudo
+  lineinfile:
+    dest=/etc/sudoers
+    state=present
+    insertafter='^root ALL\='
+    line='{{ user.name }} ALL=(ALL) ALL'
+    validate='visudo -cf %s'
+
+- name: Add user public key
+  authorized_key: user={{ user.name }} key="{{ lookup('file', item) }}" state=present
+  with_fileglob:
+    - public_keys/*.pub
+
+- name: Download csf
+  get_url: url={{ csf.download_url }} dest={{ csf.archive }}
+
+- name: Extract csf
+  unarchive: src={{ csf.archive }} dest={{ csf.download_dir }} creates={{ csf.download_dir }}/{{ csf.name }} copy=no
+
+- name: Install csf
+  command: ./install.sh chdir={{csf.download_dir}}/{{csf.name}}
+
+- name: Download jdk
+  command: 'wget -q -O {{java.archive}} --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" {{java.download_url}} creates={{java.archive}}'
+
+- name: Extract java
+  command: tar -xzf {{java.archive}} -C {{java.download_dir}} creates={{java.download_dir}}/{{java.name}}
+
+- name: Install java
+  alternatives: name=java path={{java.download_dir}}/{{java.name}}/bin/java
+
+- name: Install nvm
+  git: repo=https://github.com/creationix/nvm.git dest=~/.nvm version={{ nvm.version }}
+  become: yes
+  become_user: "{{user.name}}"
+
+- name: Check nodejs installed
+  command: bash -c '. ~/.nvm/nvm.sh; nvm ls'
+  register: nvm_install_result
+  changed_when: False
+  become: yes
+  become_user: "{{user.name}}"
+
+- name: Install nodejs
+  command: bash -c '. ~/.nvm/nvm.sh; nvm install {{nvm.node_version}}'
+  when: nvm_install_result|failed or nvm_install_result.stdout.find('{{nvm.node_version}}') == -1
+  become: yes
+  become_user: "{{user.name}}"
+
+- name: Check default nodejs installed
+  command: bash -c '. ~/.nvm/nvm.sh; nvm ls | grep -e "default -> {{nvm.node_version}}"'
+  register: nvm_check_default
+  changed_when: False
+  become: yes
+  become_user: "{{user.name}}"
+
+- name: Set default node version
+  command: bash -c '. ~/.nvm/nvm.sh; nvm alias default {{nvm.node_version}}'
+  when: nvm_check_default|failed
+  become: yes
+  become_user: "{{user.name}}"
+
+- name: Install forever
+  npm: name=forever global=yes state=present executable=~/.nvm/v{{nvm.node_version}}/bin/npm
+  become: yes
+  become_user: "{{user.name}}"
