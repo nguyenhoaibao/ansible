@@ -10,7 +10,7 @@
     - firefox
 
 - name: Create user
-  user: name={{user.name}} password={{ user.password |password_hash('sha512') }} state=present
+  user: name={{ user.name }} password={{ user.password |password_hash('sha512') }} state=present
 
 - name: Add user to sudo
   lineinfile:
@@ -25,14 +25,47 @@
   with_fileglob:
     - public_keys/*.pub
 
+- name: Copy vnc config file
+  template: src=vncservers.conf.j2 dest=/etc/sysconfig/vncservers
+
 - name: Download csf
   get_url: url={{ csf.download_url }} dest={{ csf.archive }}
 
 - name: Extract csf
   unarchive: src={{ csf.archive }} dest={{ csf.download_dir }} creates={{ csf.download_dir }}/{{ csf.name }} copy=no
 
+- name: Check csf installed
+  command: csf --version
+  register: csf_install_result
+  changed_when: False
+  ignore_errors: True
+
 - name: Install csf
   command: ./install.sh chdir={{csf.download_dir}}/{{csf.name}}
+  when: csf_install_result|failed
+
+- name: Set csf allowed in ports
+  replace:
+    dest=/etc/csf/csf.conf
+    regexp='^TCP_IN = "(.*)"$'
+    replace='TCP_IN = "\1,{{ csf.in_ports }}"'
+  when: csf_install_result|failed
+
+- name: Set csf allowed out ports
+  replace:
+    dest=/etc/csf/csf.conf
+    regexp='^TCP_OUT = "(.*)"$'
+    replace='TCP_OUT = "\1,{{ csf.out_ports }}"'
+  when: csf_install_result|failed
+
+- name: Remove csf test mode
+  replace:
+    dest=/etc/csf/csf.conf
+    regexp='^TESTING = "1"'
+    replace='TESTING = "0"'
+  notify:
+    - restart csf
+  when: csf_install_result|failed
 
 - name: Download jdk
   command: 'wget -q -O {{java.archive}} --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" {{java.download_url}} creates={{java.archive}}'

@@ -1,9 +1,13 @@
-# Ports
-ports: 5000, 5901, 6001, 27017
-
 # User
 user:
   name: test1
+  password: "123456"
+
+vnc:
+  users:
+    - { name: test1, num: 1 }
+    - { name: test2, num: 2 }
+  res: "1024x600"
   password: "123456"
 
 # Java
@@ -19,6 +23,8 @@ csf:
   download_url: https://download.configserver.com/csf.tgz
   download_dir: /opt
   archive: /opt/csf.tar.gz
+  in_ports: 5901,6001
+  out_ports: 92,93
 
 # nodejs
 nvm:

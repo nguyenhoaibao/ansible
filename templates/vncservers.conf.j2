@@ -1,0 +1,4 @@
+VNCSERVERS="{% for user in vnc.users %}{{user.num}}:{{user.name}} {% endfor %}"
+{% for user in vnc.users %}
+VNCSERVERARGS[{{user.num}}]="-geometry {{vnc.res}}"
+{% endfor %}
