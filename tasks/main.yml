@@ -79,33 +79,33 @@
 - name: Install nvm
   git: repo=https://github.com/creationix/nvm.git dest=~/.nvm version={{ nvm.version }}
   become: yes
-  become_user: "{{user.name}}"
+  become_user: "{{ user.name }}"
 
 - name: Check nodejs installed
   command: bash -c '. ~/.nvm/nvm.sh; nvm ls'
   register: nvm_install_result
   changed_when: False
   become: yes
-  become_user: "{{user.name}}"
+  become_user: "{{ user.name }}"
 
 - name: Install nodejs
   command: bash -c '. ~/.nvm/nvm.sh; nvm install {{nvm.node_version}}'
   when: nvm_install_result|failed or nvm_install_result.stdout.find('{{nvm.node_version}}') == -1
   become: yes
-  become_user: "{{user.name}}"
+  become_user: "{{ user.name }}"
 
 - name: Check default nodejs installed
   command: bash -c '. ~/.nvm/nvm.sh; nvm ls | grep -e "default -> {{nvm.node_version}}"'
   register: nvm_check_default
   changed_when: False
   become: yes
-  become_user: "{{user.name}}"
+  become_user: "{{ user.name }}"
 
 - name: Set default node version
   command: bash -c '. ~/.nvm/nvm.sh; nvm alias default {{nvm.node_version}}'
   when: nvm_check_default|failed
   become: yes
-  become_user: "{{user.name}}"
+  become_user: "{{ user.name }}"
 
 - name: Install forever
   npm: name=forever global=yes state=present executable=~/.nvm/v{{nvm.node_version}}/bin/npm
@@ -118,4 +118,4 @@
     state=present
     line="{{ item.ip }}  {{ item.hostname }}"
   with_items:
-    - "{{ hosts }}"    
+    - "{{ hosts }}"
