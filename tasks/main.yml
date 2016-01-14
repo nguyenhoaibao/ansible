@@ -111,3 +111,11 @@
   npm: name=forever global=yes state=present executable=~/.nvm/v{{nvm.node_version}}/bin/npm
   become: yes
   become_user: "{{user.name}}"
+
+- name: Copy hosts data
+  lineinfile:
+    dest=/etc/hosts
+    state=present
+    line="{{ item.ip }}  {{ item.hostname }}"
+  with_items:
+    - "{{ hosts }}"    
