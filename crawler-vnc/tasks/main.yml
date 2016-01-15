@@ -1,6 +1,8 @@
 - name: Install dependencies
   yum: name={{ item }} state=present
   with_items:
+    - gcc-c++
+    - openssl-devel
     - git
     - curl
     - curl-devel
