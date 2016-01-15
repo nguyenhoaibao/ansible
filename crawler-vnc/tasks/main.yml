@@ -3,6 +3,8 @@
   with_items:
     - gcc-c++
     - openssl-devel
+    - telnet
+    - nc
     - git
     - curl
     - curl-devel
@@ -170,7 +172,7 @@
   register: chrome_install_result
 
 - name: Copy google chrome lib
-  copy: src=google dest=/opt
+  copy: src=google dest=/opt directory_mode=True
   when: chrome_install_result.stat.exists == False
 
 
