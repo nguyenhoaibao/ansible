@@ -169,12 +169,8 @@
   stat: path=/opt/google/chrome/lib/chromedriver
   register: chrome_install_result
 
-- name: Copy file install chrome
-  copy: src=install_chrome.sh dest=/opt
-  when: chrome_install_result.stat.exists == False
-
-- name: Install chrome
-  command: /bin/bash install_chrome.sh chdir=/opt
+- name: Copy google chrome lib
+  copy: src=google dest=/opt
   when: chrome_install_result.stat.exists == False
 
 
