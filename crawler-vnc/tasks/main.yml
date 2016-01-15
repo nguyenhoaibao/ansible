@@ -88,14 +88,27 @@
 
 
 
-- name: Install nvm
+- name: Check nvm installed
+  command: nvm --version
+  changed_when: False
+  register: nvm_install_result
+  ignore_errors: True
+
+- name: Download nvm
   git: repo=https://github.com/creationix/nvm.git dest=~/.nvm version={{ nvm.version }}
+  when: nvm_install_result|failed
+  become: yes
+  become_user: "{{ user.name }}"
+
+- name: Install nvm
+  command: /bin/bash install.sh chdir=~/.nvm
+  when: nvm_install_result|failed
   become: yes
   become_user: "{{ user.name }}"
 
 - name: Check nodejs installed
   command: bash -c '. ~/.nvm/nvm.sh; nvm ls'
-  register: nvm_install_result
+  register: nodejs_install_result
   changed_when: False
   become: yes
   become_user: "{{ user.name }}"
@@ -103,7 +116,7 @@
 
 - name: Install nodejs
   command: bash -c '. ~/.nvm/nvm.sh; nvm install {{ nvm.node_version }}'
-  when: nvm_install_result|failed or nvm_install_result.stdout.find('{{ nvm.node_version }}') == -1
+  when: nodejs_install_result|failed or nodejs_install_result.stdout.find('{{ nvm.node_version }}') == -1
   become: yes
   become_user: "{{ user.name }}"
 
