@@ -130,7 +130,7 @@
 
 - name: Set default node version
   command: bash -c '. ~/.nvm/nvm.sh; nvm alias default {{ nvm.node_version }}'
-  when: "{{ nvm.node_version }} not in nvm_check_default.stdout"
+  when: nvm_check_default|failed or nvm_check_default.stdout.find('{{ nvm.node_version }}') == -1
   become: yes
   become_user: "{{ user.name }}"
 
