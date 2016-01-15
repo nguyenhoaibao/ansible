@@ -95,19 +95,19 @@
   ignore_errors: True
 
 - name: Download nvm
-  git: repo=https://github.com/creationix/nvm.git dest=~/.nvm version={{ nvm.version }}
+  get_url: url={{ nvm.download_url }} dest=~/install.sh
   when: nvm_install_result|failed
   become: yes
   become_user: "{{ user.name }}"
 
 - name: Install nvm
-  command: /bin/bash install.sh chdir=~/.nvm
+  command: /bin/bash install.sh chdir=~
   when: nvm_install_result|failed
   become: yes
   become_user: "{{ user.name }}"
 
 - name: Check nodejs installed
-  command: bash -c '. ~/.nvm/nvm.sh; nvm ls'
+  command: nvm ls
   register: nodejs_install_result
   changed_when: False
   become: yes
@@ -115,13 +115,13 @@
   ignore_errors: True
 
 - name: Install nodejs
-  command: bash -c '. ~/.nvm/nvm.sh; nvm install {{ nvm.node_version }}'
+  command: nvm install {{ nvm.node_version }}
   when: nodejs_install_result|failed or nodejs_install_result.stdout.find('{{ nvm.node_version }}') == -1
   become: yes
   become_user: "{{ user.name }}"
 
 - name: Check default nodejs installed
-  command: bash -c '. ~/.nvm/nvm.sh; nvm ls | grep -e "default -> {{ nvm.node_version }}"'
+  command: nvm ls | grep "default"
   register: nvm_check_default
   changed_when: False
   ignore_errors: True
@@ -129,8 +129,8 @@
   become_user: "{{ user.name }}"
 
 - name: Set default node version
-  command: bash -c '. ~/.nvm/nvm.sh; nvm alias default {{ nvm.node_version }}'
-  when: nvm_check_default|failed
+  command: nvm alias default {{ nvm.node_version }}
+  when: "{{ nvm.node_version }} not in nvm_check_default.stdout"
   become: yes
   become_user: "{{ user.name }}"
 
