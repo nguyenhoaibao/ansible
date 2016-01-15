@@ -84,7 +84,7 @@
   command: tar -xzf {{java.archive}} -C {{java.download_dir}} creates={{java.download_dir}}/{{java.name}}
 
 - name: Install java
-  alternatives: name=java path={{java.download_dir}}/{{java.name}}/bin/java
+  alternatives: name=java link=/usr/bin/java path={{java.download_dir}}/{{java.name}}/bin/java
 
 
 
@@ -99,6 +99,7 @@
   changed_when: False
   become: yes
   become_user: "{{ user.name }}"
+  ignore_errors: True
 
 - name: Install nodejs
   command: bash -c '. ~/.nvm/nvm.sh; nvm install {{ nvm.node_version }}'
