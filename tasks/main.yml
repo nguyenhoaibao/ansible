@@ -9,6 +9,8 @@
     - xorg-x11-fonts-Type1
     - firefox
 
+
+
 - name: Create user
   user: name={{ user.name }} password={{ user.password |password_hash('sha512') }} state=present
 
@@ -25,20 +27,26 @@
   with_fileglob:
     - public_keys/*.pub
 
+
+
 - name: Copy vnc config file
   template: src=vncservers.conf.j2 dest=/etc/sysconfig/vncservers
 
-- name: Download csf
-  get_url: url={{ csf.download_url }} dest={{ csf.archive }}
 
-- name: Extract csf
-  unarchive: src={{ csf.archive }} dest={{ csf.download_dir }} creates={{ csf.download_dir }}/{{ csf.name }} copy=no
 
 - name: Check csf installed
   command: csf --version
   register: csf_install_result
   changed_when: False
   ignore_errors: True
+
+- name: Download csf
+  get_url: url={{ csf.download_url }} dest={{ csf.archive }}
+  when: csf_install_result|failed
+
+- name: Extract csf
+  unarchive: src={{ csf.archive }} dest={{ csf.download_dir }} creates={{ csf.download_dir }}/{{ csf.name }} copy=no
+  when: csf_install_result|failed
 
 - name: Install csf
   command: ./install.sh chdir={{csf.download_dir}}/{{csf.name}}
@@ -67,6 +75,8 @@
     - restart csf
   when: csf_install_result|failed
 
+
+
 - name: Download jdk
   command: 'wget -q -O {{java.archive}} --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" {{java.download_url}} creates={{java.archive}}'
 
@@ -75,6 +85,8 @@
 
 - name: Install java
   alternatives: name=java path={{java.download_dir}}/{{java.name}}/bin/java
+
+
 
 - name: Install nvm
   git: repo=https://github.com/creationix/nvm.git dest=~/.nvm version={{ nvm.version }}
@@ -89,28 +101,53 @@
   become_user: "{{ user.name }}"
 
 - name: Install nodejs
-  command: bash -c '. ~/.nvm/nvm.sh; nvm install {{nvm.node_version}}'
-  when: nvm_install_result|failed or nvm_install_result.stdout.find('{{nvm.node_version}}') == -1
+  command: bash -c '. ~/.nvm/nvm.sh; nvm install {{ nvm.node_version }}'
+  when: nvm_install_result|failed or nvm_install_result.stdout.find('{{ nvm.node_version }}') == -1
   become: yes
   become_user: "{{ user.name }}"
 
 - name: Check default nodejs installed
-  command: bash -c '. ~/.nvm/nvm.sh; nvm ls | grep -e "default -> {{nvm.node_version}}"'
+  command: bash -c '. ~/.nvm/nvm.sh; nvm ls | grep -e "default -> {{ nvm.node_version }}"'
   register: nvm_check_default
   changed_when: False
+  ignore_errors: True
   become: yes
   become_user: "{{ user.name }}"
 
 - name: Set default node version
-  command: bash -c '. ~/.nvm/nvm.sh; nvm alias default {{nvm.node_version}}'
+  command: bash -c '. ~/.nvm/nvm.sh; nvm alias default {{ nvm.node_version }}'
   when: nvm_check_default|failed
   become: yes
   become_user: "{{ user.name }}"
 
 - name: Install forever
-  npm: name=forever global=yes state=present executable=~/.nvm/v{{nvm.node_version}}/bin/npm
+  npm: name=forever global=yes state=present executable=~/.nvm/v{{ nvm.node_version }}/bin/npm
   become: yes
   become_user: "{{user.name}}"
+
+
+
+- name: Check filebeat version
+  command: filebeat --version
+  register: filebeat_install_result
+  changed_when: False
+  ignore_errors: True
+
+- name: Download filebeat
+  get_url: url={{ filebeat.download_url }} dest={{ filebeat.download_dir }}/{{ filebeat.name }}.rpm
+  when: filebeat_install_result|failed
+
+- name: Install filebeat
+  command: rpm -i {{ filebeat.name }}.rpm chdir={{ filebeat.download_dir }}
+  when: filebeat_install_result|failed
+
+- name: Copy filebeat config file
+  copy: src=filebeat.yml dest=/etc/filebeat/filebeat.yml
+  when: filebeat_install_result|failed
+  notify:
+    - restart filebeat
+
+
 
 - name: Copy hosts data
   lineinfile:

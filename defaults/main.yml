@@ -5,8 +5,7 @@ user:
 
 vnc:
   users:
-    - { name: test1, num: 1 }
-    - { name: test2, num: 2 }
+    - { name: eastdata, num: 1 }
   res: "1024x600"
   password: "123456"
 
@@ -26,8 +25,14 @@ csf:
   download_url: https://download.configserver.com/csf.tgz
   download_dir: /opt
   archive: /opt/csf.tar.gz
-  in_ports: 5901,6001
-  out_ports: 92,93
+  in_ports: <in ports>
+  out_ports: <out ports>
+
+# filebeat
+filebeat:
+  name: filebeat
+  download_url: https://download.elastic.co/beats/filebeat/filebeat-1.0.1-x86_64.rpm
+  download_dir: /opt
 
 # nodejs
 nvm:
