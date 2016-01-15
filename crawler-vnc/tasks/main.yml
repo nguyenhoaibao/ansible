@@ -165,6 +165,20 @@
 
 
 
+- name: Check chrome installed
+  stat: path=/opt/google/chrome/lib/chromedriver
+  register: chrome_install_result
+
+- name: Copy file install chrome
+  copy: src=install_chrome.sh dest=/opt
+  when: chrome_install_result.stat.exists == False
+
+- name: Install chrome
+  command: /bin/bash install_chrome.sh chdir=/opt
+  when: chrome_install_result.stat.exists == False
+
+
+
 - name: Copy hosts data
   lineinfile:
     dest=/etc/hosts
