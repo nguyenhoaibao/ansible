@@ -1,0 +1,7 @@
+- name: restart csf
+  become: yes
+  become_method: sudo
+  command: csf -r
+
+- name: restart filebeat
+  command: /etc/init.d/filebeat restart  

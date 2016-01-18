@@ -1,0 +1,35 @@
+# User
+user:
+  name: test1
+  password: "123456"
+
+hosts:
+  - { ip: <ip>, hostname: <host> }
+
+# Java
+java:
+  name: jdk1.7.0_79
+  download_url: http://download.oracle.com/otn-pub/java/jdk/7u79-b15/jdk-7u79-linux-x64.tar.gz
+  download_dir: /opt
+  archive: /opt/jdk1.7.0_79.tar.gz
+
+# csf
+csf:
+  name: csf
+  download_url: https://download.configserver.com/csf.tgz
+  download_dir: /opt
+  archive: /opt/csf.tar.gz
+  in_ports: <in ports>
+  out_ports: <out ports>
+
+# filebeat
+filebeat:
+  name: filebeat
+  download_url: https://download.elastic.co/beats/filebeat/filebeat-1.0.1-x86_64.rpm
+  download_dir: /opt
+
+# nodejs
+nvm:
+  download_url: https://raw.githubusercontent.com/creationix/nvm/v0.30.1/install.sh
+  version: v0.30.1
+  node_version: 0.10.36
